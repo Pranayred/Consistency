@@ -1,10 +1,9 @@
 # GitHub Pages Configuration
-baseurl: "/Consistency"
-url: "https://pranayred.github.io"
+baseurl: ""
+url: "https://pranayred.github.io/Consistency"
 
 # PWA Settings
-plugins:
-  - jekyll-sitemap
+plugins: []
 
 # Build settings
 markdown: kramdown
@@ -21,6 +20,7 @@ exclude:
   - vendor/ruby/
   - .github/
   - README.md
+  - .gitignore
 
 # Include files
 include:
