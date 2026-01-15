@@ -1,0 +1,7 @@
+# PWA Service Worker Redirects
+/sw.js 200
+/manifest.json 200
+/browserconfig.xml 200
+
+# SPA Routing - redirect all to index.html
+/*    /index.html   200

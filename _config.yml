@@ -1,0 +1,36 @@
+# GitHub Pages Configuration
+baseurl: "/Consistency"
+url: "https://pranayred.github.io"
+
+# PWA Settings
+plugins:
+  - jekyll-sitemap
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Exclude files from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - .github/
+  - README.md
+
+# Include files
+include:
+  - _redirects
+
+# Compress HTML
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  startings: []
+  blanklines: false
+  profile: false
