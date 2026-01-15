@@ -1,10 +1,10 @@
 const CACHE_NAME = 'consistency-tracker-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/script.js',
-  '/manifest.json',
+  '/Consistency/',
+  '/Consistency/index.html',
+  '/Consistency/styles.css',
+  '/Consistency/script.js',
+  '/Consistency/manifest.json',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
 ];
 
@@ -44,8 +44,11 @@ self.addEventListener('activate', event => {
 
 // Fetch Service Worker
 self.addEventListener('fetch', event => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin) && !event.request.url.includes('fonts.googleapis.com')) {
+  // Handle requests for both root and subdirectory
+  const requestUrl = event.request.url;
+  
+  // Skip cross-origin requests (except fonts)
+  if (!requestUrl.startsWith(self.location.origin) && !requestUrl.includes('fonts.googleapis.com')) {
     return;
   }
 
@@ -77,7 +80,7 @@ self.addEventListener('fetch', event => {
       .catch(() => {
         // If offline, return cached index.html for all navigation requests
         if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
+          return caches.match('/Consistency/index.html');
         }
       })
   );
@@ -129,7 +132,7 @@ self.addEventListener('notificationclick', event => {
 
   if (event.action === 'explore') {
     event.waitUntil(
-      clients.openWindow('/')
+      clients.openWindow('/Consistency/')
     );
   }
 });
