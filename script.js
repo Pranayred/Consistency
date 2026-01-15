@@ -4,6 +4,7 @@ class ConsistencyTracker {
         this.initializeApp();
         this.bindEvents();
         this.updateUI();
+        this.initializePWA();
     }
 
     initializeApp() {
@@ -454,6 +455,177 @@ class ConsistencyTracker {
             this.showNotification('Data imported successfully!', 'success');
         } catch (error) {
             this.showNotification('Error importing data: ' + error.message, 'error');
+        }
+    }
+
+    // PWA Initialization
+    initializePWA() {
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('Service Worker registration failed:', error);
+                });
+        }
+
+        // PWA Install Prompt
+        this.deferredPrompt = null;
+        this.installButton = null;
+
+        // Listen for beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            this.deferredPrompt = e;
+            this.showInstallButton();
+        });
+
+        // Listen for app installed event
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA was installed');
+            this.hideInstallButton();
+            this.showNotification('App installed successfully! 🎉', 'success');
+        });
+
+        // Check if app is running in standalone mode
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('App is running in standalone mode');
+        }
+
+        // Request notification permission and schedule notifications
+        this.requestNotificationPermission();
+        this.scheduleDailyNotification();
+    }
+
+    showInstallButton() {
+        // Create install button if it doesn't exist
+        if (!this.installButton) {
+            this.installButton = document.createElement('button');
+            this.installButton.textContent = '📱 Install App';
+            this.installButton.className = 'install-btn';
+            this.installButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 25px;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                z-index: 1000;
+                transition: all 0.3s ease;
+            `;
+            
+            this.installButton.addEventListener('click', () => this.installPWA());
+            this.installButton.addEventListener('mouseenter', () => {
+                this.installButton.style.transform = 'translateY(-2px)';
+                this.installButton.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
+            });
+            this.installButton.addEventListener('mouseleave', () => {
+                this.installButton.style.transform = 'translateY(0)';
+                this.installButton.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)';
+            });
+            
+            document.body.appendChild(this.installButton);
+        }
+    }
+
+    hideInstallButton() {
+        if (this.installButton) {
+            this.installButton.remove();
+            this.installButton = null;
+        }
+    }
+
+    async installPWA() {
+        if (!this.deferredPrompt) {
+            return;
+        }
+
+        try {
+            this.deferredPrompt.prompt();
+            const { outcome } = await this.deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+            } else {
+                console.log('User dismissed the install prompt');
+            }
+            
+            this.deferredPrompt = null;
+            this.hideInstallButton();
+        } catch (error) {
+            console.error('Error during PWA installation:', error);
+        }
+    }
+
+    // Request notification permission
+    async requestNotificationPermission() {
+        if ('Notification' in navigator) {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    console.log('Notification permission granted');
+                    this.showNotification('Notifications enabled! You\'ll receive daily reminders.', 'success');
+                } else {
+                    console.log('Notification permission denied');
+                }
+            } catch (error) {
+                console.error('Error requesting notification permission:', error);
+            }
+        }
+    }
+
+    // Schedule daily push notification
+    scheduleDailyNotification() {
+        if ('Notification' in navigator && Notification.permission === 'granted') {
+            // Schedule notification for 8 PM daily
+            const now = new Date();
+            const notificationTime = new Date();
+            notificationTime.setHours(20, 0, 0, 0); // 8 PM
+            
+            // If 8 PM has passed, schedule for tomorrow
+            if (now > notificationTime) {
+                notificationTime.setDate(notificationTime.getDate() + 1);
+            }
+            
+            const timeUntilNotification = notificationTime - now;
+            
+            setTimeout(() => {
+                this.showPushNotification();
+                // Schedule next day's notification
+                setInterval(() => this.showPushNotification(), 24 * 60 * 60 * 1000);
+            }, timeUntilNotification);
+        }
+    }
+
+    showPushNotification() {
+        if ('serviceWorker' in navigator && 'Notification' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification('🔥 Daily Check-in Reminder', {
+                    body: "Don't forget to complete your daily check-in!",
+                    icon: '/icons/icon-192x192.png',
+                    badge: '/icons/icon-72x72.png',
+                    vibrate: [100, 50, 100],
+                    tag: 'daily-reminder',
+                    requireInteraction: true,
+                    actions: [
+                        {
+                            action: 'open',
+                            title: 'Open App'
+                        },
+                        {
+                            action: 'dismiss',
+                            title: 'Dismiss'
+                        }
+                    ]
+                });
+            });
         }
     }
 }
